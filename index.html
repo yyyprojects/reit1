@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>An Interactive Guide to Real Estate Investment Trusts (REITs)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals (Slate, Stone) with a Calming Blue Accent -->
+    <!-- Application Structure Plan: The SPA is designed as a guided journey for a potential investor. It starts with a high-level "What is a REIT?" (The Hook), then moves to the core "How They Work" mechanics. The centerpiece is the "REIT Universe Explorer," an interactive dashboard allowing users to discover property sectors based on their interests. This is more engaging than a static list. It's followed by a critical decision point: "Choosing Your REIT Type," which uses an interactive comparison to highlight the significant risks of non-traded REITs. The "Pros vs. Cons" and "Tax Center" sections provide practical, decision-making tools. Finally, "Market Trends" offers a forward-looking summary. This thematic, task-oriented flow prioritizes user understanding and exploration over the linear structure of the source report, making complex information digestible and actionable. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Core REIT concept -> Goal: Inform -> Viz: Simple icons (Unicode) & text blocks -> Interaction: None -> Justification: Quickly establish the core idea without overwhelming the user.
+        - Report Info: Equity vs. Mortgage REITs -> Goal: Compare -> Viz: HTML/CSS diagram with icons -> Interaction: None -> Justification: A simple visual schematic is more intuitive for explaining the two business models than dense text.
+        - Report Info: 90% Payout Rule -> Goal: Inform -> Viz: HTML/CSS progress bar style visualization -> Interaction: None -> Justification: Visually represents the high payout ratio, making the concept of income generation immediate.
+        - Report Info: REIT Sectors -> Goal: Organize/Explore -> Viz: Interactive grid of cards + dynamic detail pane with a Bar Chart (Chart.js) -> Interaction: Click cards to update chart/text -> Justification: Transforms a static list into an engaging exploration tool. The chart provides a quick visual summary of sector drivers, making complex trends understandable at a glance.
+        - Report Info: Publicly Traded vs. Non-Traded REITs -> Goal: Compare/Warn -> Viz: Interactive toggle showing a comparison table -> Interaction: Button click to switch views -> Justification: Actively engaging the user to switch views reinforces the differences and draws attention to the critical risk factors of non-traded REITs, as highlighted in the source report.
+        - Report Info: Pros and Cons -> Goal: Compare -> Viz: Two-column HTML layout with icons -> Interaction: None -> Justification: Classic, scannable format for balanced decision-making.
+        - Report Info: Tax Calculation (QBI) -> Goal: Inform/Tool -> Viz: Simple HTML form -> Interaction: User input triggers JS calculation and updates output text -> Justification: Makes an abstract tax concept concrete and personal, demonstrating the direct financial impact of the QBI deduction. Library: Vanilla JS.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .bg-warm-neutral { background-color: #f5f5f4; }
+        .accent-bg { background-color: #3b82f6; }
+        .accent-text { color: #3b82f6; }
+        .accent-border { border-color: #3b82f6; }
+        .nav-link {
+            padding: 8px 16px;
+            border-radius: 9999px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .nav-link.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .nav-link:not(.active):hover {
+            background-color: #e5e7eb;
+        }
+        .section-card {
+            background-color: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: all 0.3s ease;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 40vh;
+        }
+        .sector-card {
+            cursor: pointer;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        .sector-card.active, .sector-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .toggle-btn {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+            color: #6b7280;
+            background-color: white;
+            transition: all 0.3s ease;
+        }
+        .toggle-btn.active {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-warm-neutral text-slate-800">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold accent-text">REIT<span class="text-slate-600">vestr</span></span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-2">
+                        <a href="#intro" class="nav-link active">Intro</a>
+                        <a href="#how-it-works" class="nav-link">How It Works</a>
+                        <a href="#universe" class="nav-link">Universe</a>
+                        <a href="#types" class="nav-link">Types</a>
+                        <a href="#pros-cons" class="nav-link">Pros & Cons</a>
+                        <a href="#tax-center" class="nav-link">Tax Center</a>
+                        <a href="#trends" class="nav-link">Trends</a>
+                    </div>
+                </div>
+                 <div class="md:hidden">
+                    <select id="mobile-nav" class="bg-gray-200 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                        <option value="#intro">Intro</option>
+                        <option value="#how-it-works">How It Works</option>
+                        <option value="#universe">Universe</option>
+                        <option value="#types">Types</option>
+                        <option value="#pros-cons">Pros & Cons</option>
+                        <option value="#tax-center">Tax Center</option>
+                        <option value="#trends">Trends</option>
+                    </select>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        
+        <section id="intro" class="text-center mb-16 md:mb-24 scroll-mt-20">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Unlock the World of Real Estate Investing.</h1>
+            <p class="max-w-3xl mx-auto text-lg text-slate-600 mb-8">Owning a skyscraper or a shopping mall seems out of reach for most. A Real Estate Investment Trust (REIT) changes that. Think of it as a mutual fund for properties, allowing you to buy shares in a vast portfolio of real estate and earn income, all without being a landlord.</p>
+            <a href="#how-it-works" class="inline-block bg-blue-500 text-white font-bold py-3 px-8 rounded-full hover:bg-blue-600 transition-colors">Start Exploring</a>
+        </section>
+
+        <section id="how-it-works" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-900">The Core Mechanics</h2>
+                <p class="max-w-2xl mx-auto text-slate-600 mt-2">This section breaks down the engine of a REIT. We'll look at how they make money and the single most important rule that makes them so attractive to income-focused investors.</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8 items-start">
+                <div class="section-card">
+                    <h3 class="text-2xl font-semibold mb-4 text-center">How REITs Generate Income</h3>
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="p-4 bg-slate-50 rounded-lg">
+                             <h4 class="font-bold text-lg mb-2 flex items-center"><span class="text-2xl mr-3">🏢</span> Equity REITs (The Landlords)</h4>
+                             <p class="text-slate-600">The most common type. They own and operate physical properties. Their income comes from collecting rent from tenants in apartment buildings, offices, warehouses, and more.</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg">
+                            <h4 class="font-bold text-lg mb-2 flex items-center"><span class="text-2xl mr-3">💵</span> Mortgage REITs (The Lenders)</h4>
+                            <p class="text-slate-600">They don't own buildings. Instead, they lend money to real estate owners or invest in mortgage-backed securities. Their income is the interest earned on these loans.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="section-card">
+                    <h3 class="text-2xl font-semibold mb-4 text-center">The Golden Rule: 90% Payout</h3>
+                    <p class="text-slate-600 mb-4">To qualify as a REIT and avoid corporate taxes, a company is legally required to pay out at least 90% of its taxable income to shareholders as dividends. This is why REITs are famous for high dividend yields.</p>
+                    <div class="w-full bg-gray-200 rounded-full h-8 dark:bg-gray-700">
+                      <div class="bg-blue-500 h-8 rounded-full flex items-center justify-center text-white font-bold" style="width: 90%">90% to Shareholders</div>
+                    </div>
+                    <p class="text-sm text-slate-500 mt-2 text-center">The remaining 10% (or less) can be reinvested into the business.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="universe" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-900">The REIT Universe Explorer</h2>
+                <p class="max-w-3xl mx-auto text-slate-600 mt-2">Investing in REITs means you're investing in a specific part of the economy. From the warehouses that power e-commerce to the cell towers connecting our phones, there's a REIT for almost everything. Click on a sector below to explore its role and see its key demand drivers.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div id="sector-Industrial" class="sector-card p-4 text-center active">
+                            <span class="text-4xl">🏭</span>
+                            <p class="font-semibold mt-2">Industrial</p>
+                        </div>
+                        <div id="sector-Retail" class="sector-card p-4 text-center">
+                            <span class="text-4xl">🛍️</span>
+                            <p class="font-semibold mt-2">Retail</p>
+                        </div>
+                        <div id="sector-Residential" class="sector-card p-4 text-center">
+                            <span class="text-4xl">🏠</span>
+                            <p class="font-semibold mt-2">Residential</p>
+                        </div>
+                        <div id="sector-Office" class="sector-card p-4 text-center">
+                            <span class="text-4xl">🏢</span>
+                            <p class="font-semibold mt-2">Office</p>
+                        </div>
+                        <div id="sector-Healthcare" class="sector-card p-4 text-center">
+                            <span class="text-4xl">⚕️</span>
+                            <p class="font-semibold mt-2">Healthcare</p>
+                        </div>
+                        <div id="sector-Data Centers" class="sector-card p-4 text-center">
+                            <span class="text-4xl">💾</span>
+                            <p class="font-semibold mt-2">Data Centers</p>
+                        </div>
+                         <div id="sector-Cell Towers" class="sector-card p-4 text-center">
+                            <span class="text-4xl">🗼</span>
+                            <p class="font-semibold mt-2">Cell Towers</p>
+                        </div>
+                         <div id="sector-Specialty" class="sector-card p-4 text-center">
+                            <span class="text-4xl">🎰</span>
+                            <p class="font-semibold mt-2">Specialty</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-card md:col-span-1 lg:col-span-2">
+                    <h3 id="sector-title" class="text-2xl font-bold mb-2">Industrial REITs</h3>
+                    <p id="sector-description" class="text-slate-600 mb-6">Owns warehouses, distribution centers, and logistics facilities. They are the essential backbone of the e-commerce supply chain, storing and moving goods from sellers to your doorstep.</p>
+                    <div class="chart-container">
+                        <canvas id="sectorChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="types" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-900">Choosing Your REIT Type: A Critical Distinction</h2>
+                <p class="max-w-3xl mx-auto text-slate-600 mt-2">How you buy a REIT matters—a lot. The difference between a publicly traded REIT and a non-traded REIT has huge implications for your investment's liquidity, fees, and risk. Use the toggle below to compare them directly.</p>
+            </div>
+            <div class="section-card max-w-4xl mx-auto">
+                 <div class="flex justify-center mb-6">
+                    <div class="inline-flex rounded-md shadow-sm">
+                        <button id="btn-public" class="toggle-btn active">Publicly Traded</button>
+                        <button id="btn-nontraded" class="toggle-btn">Public Non-Traded</button>
+                    </div>
+                </div>
+                <div id="public-table">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b">
+                                <th class="p-4 font-semibold">Feature</th>
+                                <th class="p-4 font-semibold text-blue-600">Publicly Traded REIT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b"><td class="p-4 font-medium">Liquidity</td><td class="p-4 text-slate-600"><strong>High.</strong> Shares are bought and sold easily on major stock exchanges like the NYSE.</td></tr>
+                            <tr class="border-b"><td class="p-4 font-medium">Upfront Fees</td><td class="p-4 text-slate-600"><strong>Low.</strong> Standard brokerage commissions apply.</td></tr>
+                            <tr class="border-b"><td class="p-4 font-medium">Price Transparency</td><td class="p-4 text-slate-600"><strong>High.</strong> Real-time market price is continuously available.</td></tr>
+                            <tr><td class="p-4 font-medium">Key Risk</td><td class="p-4 text-slate-600">Standard market volatility and economic cycles.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                 <div id="nontraded-table" class="hidden">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b">
+                                <th class="p-4 font-semibold">Feature</th>
+                                <th class="p-4 font-semibold text-red-600">Public Non-Traded REIT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b"><td class="p-4 font-medium">Liquidity</td><td class="p-4 text-slate-600"><strong>Very Low.</strong> No public market. Investors may be locked in for 8+ years.</td></tr>
+                            <tr class="border-b"><td class="p-4 font-medium">Upfront Fees</td><td class="p-4 text-slate-600"><strong>Very High.</strong> Sales commissions can be 10-15% of your investment, immediately reducing its value.</td></tr>
+                            <tr class="border-b"><td class="p-4 font-medium">Price Transparency</td><td class="p-4 text-slate-600"><strong>Low.</strong> Share value is set by the company, not the market, and updated infrequently.</td></tr>
+                            <tr><td class="p-4 font-medium">Key Risk</td><td class="p-4 text-slate-600">Illiquidity, high fees, and potential for distributions to be funded by debt or by returning your own capital.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="pros-cons" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-900">Is a REIT Right For You?</h2>
+                <p class="max-w-2xl mx-auto text-slate-600 mt-2">Like any investment, REITs have a unique profile of potential benefits and risks. Here's a balanced look at both sides of the coin to help you decide if they fit in your portfolio.</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="section-card">
+                    <h3 class="text-2xl font-semibold mb-4 text-green-600">The Pros</h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-start"><span class="text-2xl mr-3">💰</span><div><strong class="block">High Dividend Income</strong><span>Steady income stream due to the 90% payout rule.</span></div></li>
+                        <li class="flex items-start"><span class="text-2xl mr-3">📈</span><div><strong class="block">Portfolio Diversification</strong><span>Real estate often moves independently of stocks and bonds.</span></div></li>
+                        <li class="flex items-start"><span class="text-2xl mr-3">💧</span><div><strong class="block">Liquidity</strong><span>Publicly traded REITs can be sold as easily as any stock.</span></div></li>
+                        <li class="flex items-start"><span class="text-2xl mr-3">🛡️</span><div><strong class="block">Inflation Hedge</strong><span>Property values and rents tend to rise with inflation.</span></div></li>
+                    </ul>
+                </div>
+                <div class="section-card">
+                    <h3 class="text-2xl font-semibold mb-4 text-red-600">The Cons</h3>
+                     <ul class="space-y-4">
+                        <li class="flex items-start"><span class="text-2xl mr-3">💸</span><div><strong class="block">Higher Dividend Taxes</strong><span>Most dividends are taxed as ordinary income, at a higher rate.</span></div></li>
+                        <li class="flex items-start"><span class="text-2xl mr-3">📉</span><div><strong class="block">Interest Rate Sensitivity</strong><span>Rising rates can hurt REIT prices as borrowing gets more expensive.</span></div></li>
+                        <li class="flex items-start"><span class="text-2xl mr-3">🐢</span><div><strong class="block">Limited Growth Potential</strong><span>High payouts leave less cash to reinvest for growth.</span></div></li>
+                        <li class="flex items-start"><span class="text-2xl mr-3">業界</span><div><strong class="block">Sector-Specific Risk</strong><span>A REIT focused on one area (e.g., malls) is vulnerable to industry trends.</span></div></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="tax-center" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-900">Interactive Tax Center</h2>
+                <p class="max-w-3xl mx-auto text-slate-600 mt-2">The tax treatment of REIT dividends is unique. A special rule, the Qualified Business Income (QBI) deduction, can lower your tax bill. Enter a hypothetical dividend amount below to see how this powerful (but temporary) deduction works.</p>
+            </div>
+            <div class="section-card max-w-2xl mx-auto">
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <label for="dividend-input" class="block font-medium mb-1">Enter Annual REIT Dividend:</label>
+                        <div class="flex items-center">
+                            <span class="text-slate-500 mr-2">$</span>
+                             <input type="number" id="dividend-input" value="1000" class="w-full p-2 border border-gray-300 rounded-md">
+                        </div>
+                        <label for="tax-rate-input" class="block font-medium mb-1 mt-4">Your Marginal Tax Rate:</label>
+                        <div class="flex items-center">
+                            <input type="number" id="tax-rate-input" value="24" class="w-full p-2 border border-gray-300 rounded-md">
+                             <span class="text-slate-500 ml-2">%</span>
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 p-6 rounded-lg text-center">
+                        <p class="text-slate-600">Your Effective Tax Rate:</p>
+                        <p id="effective-rate" class="text-4xl font-bold accent-text mb-2">19.2%</p>
+                        <p class="text-slate-600">Tax Owed:</p>
+                        <p id="tax-owed" class="text-2xl font-bold text-slate-800">$192.00</p>
+                        <p id="tax-savings" class="text-sm text-green-600 font-medium mt-2">You saved $48.00 with the QBI deduction!</p>
+                    </div>
+                </div>
+                 <p class="text-xs text-slate-500 mt-4 text-center">Disclaimer: This is a simplified educational tool. The QBI deduction is complex and set to expire after 2025. Consult a tax professional for advice.</p>
+            </div>
+        </section>
+
+        <section id="trends" class="scroll-mt-20">
+             <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-900">The Modern REIT Landscape</h2>
+                <p class="max-w-3xl mx-auto text-slate-600 mt-2">The real estate world is always changing. Major economic shifts create challenges for some sectors and massive opportunities for others. Understanding these trends is key to smart REIT investing.</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="p-6 rounded-lg bg-white/60">
+                    <h3 class="font-bold text-lg mb-2 text-red-600">Sectors Facing Headwinds</h3>
+                    <p class="text-slate-600">The rise of e-commerce and remote work has created structural challenges for <strong class="font-semibold">Retail REITs</strong> (especially malls) and <strong class="font-semibold">Office REITs</strong>. These sectors are now focused on adapting by upgrading to high-quality, "experiential" properties or converting buildings for new uses, like apartments.</p>
+                </div>
+                 <div class="p-6 rounded-lg bg-white/60">
+                    <h3 class="font-bold text-lg mb-2 text-green-600">Sectors with Tailwinds</h3>
+                    <p class="text-slate-600">Those same trends are fueling huge growth for the physical backbone of the digital economy. <strong class="font-semibold">Industrial REITs</strong> (warehouses), <strong class="font-semibold">Data Centers</strong>, and <strong class="font-semibold">Cell Towers</strong> are in high demand as our world becomes more connected and online.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="bg-slate-800 text-slate-400 mt-16">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-sm">
+            <p>&copy; 2025 REITvestr. An educational tool. Not financial advice.</p>
+        </div>
+    </footer>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const sectorData = {
+                'Industrial': {
+                    description: "Owns warehouses, distribution centers, and logistics facilities. They are the essential backbone of the e-commerce supply chain, storing and moving goods from sellers to your doorstep.",
+                    chartData: { labels: ['E-Commerce Growth', 'Supply Chain Onshoring', 'Consumer Demand'], values: [95, 75, 80], bgColor: 'rgba(59, 130, 246, 0.7)' }
+                },
+                'Retail': {
+                    description: "Owns regional malls, shopping centers, and freestanding stores. Performance is tied to consumer spending habits and the ongoing competition from e-commerce.",
+                    chartData: { labels: ['Consumer Spending', 'E-commerce Resistance', 'Experiential Value'], values: [70, 40, 60], bgColor: 'rgba(236, 72, 153, 0.7)' }
+                },
+                'Residential': {
+                    description: "Owns and manages multifamily properties like apartment buildings, as well as single-family rentals and student housing. Performance is driven by population growth and job markets.",
+                    chartData: { labels: ['Population Growth', 'Job Market Strength', 'Housing Affordability'], values: [85, 80, 70], bgColor: 'rgba(22, 163, 74, 0.7)' }
+                },
+                'Office': {
+                    description: "Owns and manages office buildings. This sector has been significantly affected by the trend toward remote and hybrid work, leading to a 'flight to quality' for the best buildings.",
+                    chartData: { labels: ['Return-to-Office Trend', 'Flight to Quality', 'Economic Growth'], values: [45, 80, 65], bgColor: 'rgba(107, 114, 128, 0.7)' }
+                },
+                'Healthcare': {
+                    description: "Owns hospitals, medical offices, and senior housing. This sector is influenced by demographic trends like the aging of the population and by healthcare policy.",
+                    chartData: { labels: ['Aging Population', 'Healthcare Spending', 'Medical Advancements'], values: [90, 85, 75], bgColor: 'rgba(139, 92, 246, 0.7)' }
+                },
+                'Data Centers': {
+                    description: "Owns secure facilities that house servers and networking equipment for the internet, cloud computing, and AI. Demand is driven by the explosive growth of digital data.",
+                    chartData: { labels: ['AI & Cloud Growth', 'Data Consumption', 'Digital Transformation'], values: [100, 95, 90], bgColor: 'rgba(249, 115, 22, 0.7)' }
+                },
+                'Cell Towers': {
+                    description: "Owns communication towers and leases space to wireless carriers. Performance is driven by the expansion of mobile data usage, 5G networks, and the Internet of Things (IoT).",
+                    chartData: { labels: ['5G Rollout', 'Mobile Data Growth', 'IoT Expansion'], values: [90, 95, 80], bgColor: 'rgba(217, 70, 239, 0.7)' }
+                },
+                'Specialty': {
+                    description: "A diverse category including unique properties like self-storage facilities, casinos, hotels, and even timberlands. Each sub-sector has its own unique economic drivers.",
+                    chartData: { labels: ['Economic Niche Demand', 'Consumer Leisure', 'Housing Turnover (Storage)'], values: [70, 65, 75], bgColor: 'rgba(20, 184, 166, 0.7)' }
+                }
+            };
+            
+            const ctx = document.getElementById('sectorChart').getContext('2d');
+            let sectorChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Key Demand Drivers (Score)',
+                        data: [],
+                        backgroundColor: [],
+                        borderColor: [],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { beginAtZero: true, max: 100, grid: { display: false } },
+                        y: { grid: { display: false } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Strength: ${context.raw}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            function updateSectorInfo(sectorName) {
+                const data = sectorData[sectorName];
+                if (!data) return;
+
+                document.getElementById('sector-title').textContent = `${sectorName} REITs`;
+                document.getElementById('sector-description').textContent = data.description;
+
+                sectorChart.data.labels = data.chartData.labels;
+                sectorChart.data.datasets[0].data = data.chartData.values;
+                sectorChart.data.datasets[0].backgroundColor = data.chartData.bgColor;
+                sectorChart.update();
+                
+                document.querySelectorAll('.sector-card').forEach(card => card.classList.remove('active'));
+                document.getElementById(`sector-${sectorName.replace(' ', '-')}`).classList.add('active');
+            }
+
+            document.querySelectorAll('.sector-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const sectorName = card.id.replace('sector-', '').replace('-', ' ');
+                    updateSectorInfo(sectorName);
+                });
+            });
+
+            updateSectorInfo('Industrial');
+            
+            const btnPublic = document.getElementById('btn-public');
+            const btnNonTraded = document.getElementById('btn-nontraded');
+            const publicTable = document.getElementById('public-table');
+            const nonTradedTable = document.getElementById('nontraded-table');
+            
+            btnPublic.addEventListener('click', () => {
+                publicTable.classList.remove('hidden');
+                nonTradedTable.classList.add('hidden');
+                btnPublic.classList.add('active');
+                btnNonTraded.classList.remove('active');
+            });
+            
+             btnNonTraded.addEventListener('click', () => {
+                publicTable.classList.add('hidden');
+                nonTradedTable.classList.remove('hidden');
+                btnPublic.classList.remove('active');
+                btnNonTraded.classList.add('active');
+            });
+
+            const dividendInput = document.getElementById('dividend-input');
+            const taxRateInput = document.getElementById('tax-rate-input');
+            const effectiveRateEl = document.getElementById('effective-rate');
+            const taxOwedEl = document.getElementById('tax-owed');
+            const taxSavingsEl = document.getElementById('tax-savings');
+
+            function calculateTaxes() {
+                const dividend = parseFloat(dividendInput.value) || 0;
+                const taxRate = parseFloat(taxRateInput.value) || 0;
+
+                if (dividend <= 0 || taxRate <= 0) {
+                    effectiveRateEl.textContent = 'N/A';
+                    taxOwedEl.textContent = '$0.00';
+                    taxSavingsEl.textContent = 'Enter valid inputs to see savings.';
+                    return;
+                }
+
+                const qbiDeduction = dividend * 0.20;
+                const taxableDividend = dividend - qbiDeduction;
+                const taxOwed = taxableDividend * (taxRate / 100);
+                const taxWithoutQBI = dividend * (taxRate / 100);
+                const savings = taxWithoutQBI - taxOwed;
+                const effectiveRate = (taxOwed / dividend) * 100;
+
+                effectiveRateEl.textContent = `${effectiveRate.toFixed(1)}%`;
+                taxOwedEl.textContent = `$${taxOwed.toFixed(2)}`;
+                taxSavingsEl.textContent = `You saved $${savings.toFixed(2)} with the QBI deduction!`;
+            }
+
+            dividendInput.addEventListener('input', calculateTaxes);
+            taxRateInput.addEventListener('input', calculateTaxes);
+            calculateTaxes();
+
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }, { rootMargin: "-30% 0px -70% 0px" });
+
+            sections.forEach(section => observer.observe(section));
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelector(link.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+            
+            const mobileNav = document.getElementById('mobile-nav');
+            mobileNav.addEventListener('change', (e) => {
+                 document.querySelector(e.target.value).scrollIntoView({ behavior: 'smooth' });
+            });
+
+        });
+    </script>
+</body>
+</html>
